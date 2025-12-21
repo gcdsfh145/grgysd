@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.rounded.*
@@ -143,7 +144,7 @@ fun MusicApp(viewModel: MusicViewModel) {
                         onClick = { currentScreen = Screen.Library }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.PlaylistPlay, null) },
+                        icon = { Icon(Icons.AutoMirrored.Filled.PlaylistPlay, null) },
                         label = { Text(stringResource(R.string.nav_playlists)) },
                         selected = currentScreen is Screen.Playlists,
                         onClick = { currentScreen = Screen.Playlists }
@@ -371,7 +372,7 @@ fun PlaylistsScreen(viewModel: MusicViewModel, onPlaylistClick: (Playlist) -> Un
 fun PlaylistDetailScreen(viewModel: MusicViewModel, playlist: Playlist, onBack: () -> Unit) {
     val songs = viewModel.getSongsInPlaylist(playlist)
     Scaffold(
-        topBar = { TopAppBar(title = { Text(playlist.name) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
+        topBar = { TopAppBar(title = { Text(playlist.name) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
     ) { padding ->
         if (songs.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text(stringResource(R.string.no_songs_playlist)) }
@@ -389,7 +390,7 @@ fun PlaylistDetailScreen(viewModel: MusicViewModel, playlist: Playlist, onBack: 
 @Composable
 fun SettingsScreen(viewModel: MusicViewModel, onBack: () -> Unit, onNavigateToHidden: () -> Unit, onNavigateToSources: () -> Unit) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
     ) { padding ->
         Column(Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
             Text(stringResource(R.string.settings_appearance), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
@@ -446,7 +447,7 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
         topBar = { 
             TopAppBar(
                 title = { Text(stringResource(R.string.source_manager_title)) }, 
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
                 actions = { IconButton(onClick = { showDialog = true }) { Icon(Icons.Default.Add, null) } }
             ) 
         }
@@ -505,7 +506,7 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
 @Composable
 fun HiddenSongsScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.hidden_songs_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.hidden_songs_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }) }
     ) { padding ->
         val hiddenSongs = viewModel.allSongs.filter { it.id in viewModel.hiddenSongIds }
         if (hiddenSongs.isEmpty()) {

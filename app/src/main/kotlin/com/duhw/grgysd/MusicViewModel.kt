@@ -25,6 +25,7 @@ import java.util.UUID
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.DefaultDataSource
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 enum class AppLanguage(val tag: String, val label: String) {
@@ -51,7 +52,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val player: ExoPlayer = ExoPlayer.Builder(application)
         .setMediaSourceFactory(
             androidx.media3.exoplayer.source.DefaultMediaSourceFactory(application)
-                .setDataSourceFactory(OkHttpDataSource.Factory(client))
+                .setDataSourceFactory(DefaultDataSource.Factory(application, OkHttpDataSource.Factory(client)))
         )
         .build()
 
