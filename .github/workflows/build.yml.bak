@@ -28,5 +28,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: grgysd
+          name: GUI-Injector
           path: app/build/outputs/apk/debug/*.apk
