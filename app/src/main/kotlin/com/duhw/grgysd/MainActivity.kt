@@ -4,10 +4,10 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duhw.grgysd.ui.theme.ComposeEmptyActivityTheme
 import com.duhw.grgysd.ui.theme.*
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,7 +78,7 @@ fun PermissionWrapper(content: @Composable () -> Unit) {
     var hasPermission by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasPermission = it }
     LaunchedEffect(Unit) { if (!hasPermission) launcher.launch(permission) }
-    if (hasPermission) content() else Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Permission Denied") }
+    if (hasPermission) content() else Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.permission_denied)) }
 }
 
 sealed class Screen {
@@ -123,10 +124,10 @@ fun MusicApp(viewModel: MusicViewModel) {
         topBar = {
             if (currentScreen !is Screen.Settings && currentScreen !is Screen.HiddenSongs && currentScreen !is Screen.PlaylistDetail) {
                 CenterAlignedTopAppBar(
-                    title = { Text(if (currentScreen is Screen.Library) "Library" else "Playlists", fontWeight = FontWeight.Bold) },
+                    title = { Text(if (currentScreen is Screen.Library) stringResource(R.string.nav_library) else stringResource(R.string.nav_playlists), fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = { currentScreen = Screen.Settings }) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings_title))
                         }
                     }
                 )
@@ -137,19 +138,19 @@ fun MusicApp(viewModel: MusicViewModel) {
                 NavigationBar {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.MusicNote, null) },
-                        label = { Text("Library") },
+                        label = { Text(stringResource(R.string.nav_library)) },
                         selected = currentScreen is Screen.Library,
                         onClick = { currentScreen = Screen.Library }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.PlaylistPlay, null) },
-                        label = { Text("Playlists") },
+                        label = { Text(stringResource(R.string.nav_playlists)) },
                         selected = currentScreen is Screen.Playlists,
                         onClick = { currentScreen = Screen.Playlists }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Cloud, null) },
-                        label = { Text("Online") },
+                        label = { Text(stringResource(R.string.nav_online)) },
                         selected = currentScreen is Screen.Online,
                         onClick = { 
                             currentScreen = Screen.Online
@@ -220,7 +221,7 @@ fun OnlineScreen(viewModel: MusicViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            placeholder = { Text("Search online (Kuwo/Netease/Bodian)...") },
+            placeholder = { Text(stringResource(R.string.search_online_placeholder)) },
             leadingIcon = { Icon(Icons.Default.CloudSync, null) },
             trailingIcon = {
                 if (viewModel.searchQuery.isNotEmpty()) {
@@ -237,12 +238,15 @@ fun OnlineScreen(viewModel: MusicViewModel) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Search, null, Modifier.size(64.dp), Color.Gray.copy(0.3f))
-                    Text("Type to search online music", color = Color.Gray)
+                    Text(stringResource(R.string.search_online_hint), color = Color.Gray)
                 }
             }
         } else {
             LazyColumn(Modifier.fillMaxSize()) {
-                items(viewModel.onlineSongs, key = { it.uri.toString() }) { song ->
+                items(
+                    items = viewModel.onlineSongs,
+                    key = { it.uri.toString() }
+                ) { song ->
                     Box(Modifier.animateItem()) {
                         SongItem(
                             song = song,
@@ -268,7 +272,7 @@ fun LibraryScreen(viewModel: MusicViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            placeholder = { Text("Search songs or artists...") },
+            placeholder = { Text(stringResource(R.string.search_local_placeholder)) },
             leadingIcon = { Icon(Icons.Default.Search, null) },
             trailingIcon = {
                 if (viewModel.searchQuery.isNotEmpty()) {
@@ -286,7 +290,10 @@ fun LibraryScreen(viewModel: MusicViewModel) {
         }
         
         LazyColumn(Modifier.fillMaxSize()) {
-            items(viewModel.localFilteredSongs, key = { it.id }) { song ->
+            items(
+                items = viewModel.localFilteredSongs,
+                key = { it.id }
+            ) { song ->
                 Box(Modifier.animateItem()) {
                     SongItem(
                         song = song,
@@ -322,7 +329,7 @@ fun SongItem(song: Song, isSelected: Boolean, isFavorite: Boolean, onFavoriteTog
                 Box {
                     IconButton(onClick = { showMenu = true }) { Icon(Icons.Default.MoreVert, null) }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(text = { Text("Hide Song") }, onClick = { onHide(); showMenu = false }, leadingIcon = { Icon(Icons.Default.VisibilityOff, null) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.menu_hide_song)) }, onClick = { onHide(); showMenu = false }, leadingIcon = { Icon(Icons.Default.VisibilityOff, null) })
                     }
                 }
             }
@@ -338,7 +345,7 @@ fun PlaylistsScreen(viewModel: MusicViewModel, onPlaylistClick: (Playlist) -> Un
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             ListItem(
-                headlineContent = { Text("Create New Playlist", fontWeight = FontWeight.Bold) },
+                headlineContent = { Text(stringResource(R.string.create_playlist), fontWeight = FontWeight.Bold) },
                 leadingContent = { Icon(Icons.Default.Add, null) },
                 modifier = Modifier.clickable { showDialog = true }
             )
@@ -355,7 +362,7 @@ fun PlaylistsScreen(viewModel: MusicViewModel, onPlaylistClick: (Playlist) -> Un
     }
 
     if (showDialog) {
-        AlertDialog(onDismissRequest = { showDialog = false }, title = { Text("New Playlist") }, text = { TextField(value = newName, onValueChange = { newName = it }) }, confirmButton = { TextButton(onClick = { if(newName.isNotBlank()) viewModel.createPlaylist(newName); showDialog = false; newName = "" }) { Text("Create") } })
+        AlertDialog(onDismissRequest = { showDialog = false }, title = { Text(stringResource(R.string.new_playlist_title)) }, text = { TextField(value = newName, onValueChange = { newName = it }) }, confirmButton = { TextButton(onClick = { if(newName.isNotBlank()) viewModel.createPlaylist(newName); showDialog = false; newName = "" }) { Text(stringResource(R.string.create_button)) } })
     }
 }
 
@@ -367,7 +374,7 @@ fun PlaylistDetailScreen(viewModel: MusicViewModel, playlist: Playlist, onBack: 
         topBar = { TopAppBar(title = { Text(playlist.name) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
     ) { padding ->
         if (songs.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("No songs in this playlist") }
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text(stringResource(R.string.no_songs_playlist)) }
         } else {
             LazyColumn(Modifier.padding(padding)) {
                 items(songs) { song ->
@@ -382,32 +389,48 @@ fun PlaylistDetailScreen(viewModel: MusicViewModel, playlist: Playlist, onBack: 
 @Composable
 fun SettingsScreen(viewModel: MusicViewModel, onBack: () -> Unit, onNavigateToHidden: () -> Unit, onNavigateToSources: () -> Unit) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
     ) { padding ->
         Column(Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
-            Text("Appearance", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            ListItem(headlineContent = { Text("Theme Mode") }, trailingContent = {
-                Row { ThemeMode.values().forEach { mode -> FilterChip(selected = viewModel.themeMode == mode, onClick = { viewModel.themeMode = mode }, label = { Text(mode.name) }) } }
+            Text(stringResource(R.string.settings_appearance), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.settings_language)) },
+                trailingContent = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AppLanguage.values().forEach { lang ->
+                            FilterChip(
+                                selected = viewModel.currentLanguage == lang,
+                                onClick = { viewModel.setLanguage(lang) },
+                                label = { Text(lang.label) }
+                            )
+                        }
+                    }
+                }
+            )
+
+            ListItem(headlineContent = { Text(stringResource(R.string.settings_theme_mode)) }, trailingContent = {
+                Row { ThemeMode.values().forEach { mode -> FilterChip(selected = viewModel.themeMode == mode, onClick = { viewModel.updateThemeMode(mode) }, label = { Text(mode.name) }) } }
             })
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ListItem(headlineContent = { Text("Dynamic Color") }, trailingContent = { Switch(checked = viewModel.useDynamicColor, onCheckedChange = { viewModel.useDynamicColor = it }) })
+                ListItem(headlineContent = { Text(stringResource(R.string.settings_dynamic_color)) }, trailingContent = { Switch(checked = viewModel.useDynamicColor, onCheckedChange = { viewModel.updateDynamicColor(it) }) })
             }
             Spacer(Modifier.height(16.dp))
-            Text("Online Music", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.settings_online_music), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             ListItem(
-                headlineContent = { Text("Enable Online Search") },
-                trailingContent = { Switch(checked = viewModel.isOnlineEnabled, onCheckedChange = { viewModel.isOnlineEnabled = it }) }
+                headlineContent = { Text(stringResource(R.string.settings_enable_online)) },
+                trailingContent = { Switch(checked = viewModel.isOnlineEnabled, onCheckedChange = { viewModel.updateOnlineEnabled(it) }) }
             )
             ListItem(
-                headlineContent = { Text("Music Source Management") },
-                supportingContent = { Text("Current: ${viewModel.selectedSource.name}") },
+                headlineContent = { Text(stringResource(R.string.settings_source_management)) },
+                supportingContent = { Text(stringResource(R.string.settings_current_source, viewModel.selectedSource.name)) },
                 leadingContent = { Icon(Icons.Default.Dns, null) },
                 modifier = Modifier.clickable { onNavigateToSources() },
                 trailingContent = { Icon(Icons.Default.ChevronRight, null) }
             )
             Spacer(Modifier.height(16.dp))
-            Text("Library Management", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            ListItem(headlineContent = { Text("Hidden Songs") }, leadingContent = { Icon(Icons.Default.VisibilityOff, null) }, modifier = Modifier.clickable { onNavigateToHidden() }, trailingContent = { Icon(Icons.Default.ChevronRight, null) })
+            Text(stringResource(R.string.settings_library_management), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            ListItem(headlineContent = { Text(stringResource(R.string.settings_hidden_songs)) }, leadingContent = { Icon(Icons.Default.VisibilityOff, null) }, modifier = Modifier.clickable { onNavigateToHidden() }, trailingContent = { Icon(Icons.Default.ChevronRight, null) })
         }
     }
 }
@@ -422,7 +445,7 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
     Scaffold(
         topBar = { 
             TopAppBar(
-                title = { Text("Music Sources") }, 
+                title = { Text(stringResource(R.string.source_manager_title)) }, 
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
                 actions = { IconButton(onClick = { showDialog = true }) { Icon(Icons.Default.Add, null) } }
             ) 
@@ -432,11 +455,11 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
             items(viewModel.availableSources) { source ->
                 val isSelected = viewModel.selectedSource == source
                 ListItem(
-                    modifier = Modifier.clickable { viewModel.selectedSource = source },
+                    modifier = Modifier.clickable { viewModel.updateSelectedSource(source) },
                     headlineContent = { Text(source.name, fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal) },
                     supportingContent = { Text(source.url, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     leadingContent = { 
-                        RadioButton(selected = isSelected, onClick = { viewModel.selectedSource = source }) 
+                        RadioButton(selected = isSelected, onClick = { viewModel.updateSelectedSource(source) }) 
                     },
                     trailingContent = {
                         if (viewModel.availableSources.size > 1) {
@@ -456,12 +479,12 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Add Music Source") },
+            title = { Text(stringResource(R.string.add_source_title)) },
             text = {
                 Column {
-                    TextField(value = newName, onValueChange = { newName = it }, label = { Text("Name (e.g. My Source)") })
+                    TextField(value = newName, onValueChange = { newName = it }, label = { Text(stringResource(R.string.source_name_label)) })
                     Spacer(Modifier.height(8.dp))
-                    TextField(value = newUrl, onValueChange = { newUrl = it }, label = { Text("API URL (starts with http)") })
+                    TextField(value = newUrl, onValueChange = { newUrl = it }, label = { Text(stringResource(R.string.source_url_label)) })
                 }
             },
             confirmButton = {
@@ -471,9 +494,9 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
                         showDialog = false
                         newName = ""; newUrl = ""
                     }
-                }) { Text("Add") }
+                }) { Text(stringResource(R.string.add_button)) }
             },
-            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showDialog = false }) { Text(stringResource(R.string.cancel_button)) } }
         )
     }
 }
@@ -482,15 +505,15 @@ fun SourceManagerScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
 @Composable
 fun HiddenSongsScreen(viewModel: MusicViewModel, onBack: () -> Unit) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Hidden Songs") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.hidden_songs_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) }
     ) { padding ->
         val hiddenSongs = viewModel.allSongs.filter { it.id in viewModel.hiddenSongIds }
         if (hiddenSongs.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("No hidden songs") }
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text(stringResource(R.string.no_hidden_songs)) }
         } else {
             LazyColumn(Modifier.padding(padding)) {
                 items(hiddenSongs) { song ->
-                    ListItem(headlineContent = { Text(song.title) }, trailingContent = { Button(onClick = { viewModel.unhideSong(song.id) }) { Text("Restore") } })
+                    ListItem(headlineContent = { Text(song.title) }, trailingContent = { Button(onClick = { viewModel.unhideSong(song.id) }) { Text(stringResource(R.string.restore_button)) } })
                 }
             }
         }

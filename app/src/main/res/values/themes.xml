@@ -1,3 +1,9 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.ComposeEmptyActivity" parent="android:Theme.Material.Light.NoActionBar" />
+<resources>
+    <!-- Base application theme. -->
+    <style name="Theme.ComposeEmptyActivity" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- 保持状态栏透明以适配 Compose edge-to-edge -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>

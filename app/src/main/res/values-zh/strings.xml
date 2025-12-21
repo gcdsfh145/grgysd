@@ -1,0 +1,41 @@
+<resources>
+    <string name="app_name">grgysd</string>
+    <string name="nav_library">库</string>
+    <string name="nav_playlists">播放列表</string>
+    <string name="nav_online">搜索</string>
+    
+    <string name="search_local_placeholder">搜索歌曲或歌手...</string>
+    <string name="search_online_placeholder">搜索在线音乐 (酷我/网易/波点)...</string>
+    <string name="search_online_hint">输入关键词搜索在线音乐</string>
+    
+    <string name="create_playlist">创建新播放列表</string>
+    <string name="new_playlist_title">新播放列表</string>
+    <string name="create_button">创建</string>
+    <string name="cancel_button">取消</string>
+    <string name="no_songs_playlist">此播放列表暂无歌曲</string>
+    
+    <string name="settings_title">设置</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_language">应用语言</string>
+    <string name="settings_theme_mode">主题模式</string>
+    <string name="settings_dynamic_color">动态配色</string>
+    <string name="settings_online_music">在线音乐</string>
+    <string name="settings_enable_online">启用在线搜索</string>
+    <string name="settings_source_management">音源管理</string>
+    <string name="settings_current_source">当前: %1$s</string>
+    <string name="settings_library_management">曲库管理</string>
+    <string name="settings_hidden_songs">已隐藏歌曲</string>
+    
+    <string name="source_manager_title">音源设置</string>
+    <string name="add_source_title">添加新音源</string>
+    <string name="source_name_label">名称 (如：我的音源)</string>
+    <string name="source_url_label">API 地址 (以 http 开头)</string>
+    <string name="add_button">添加</string>
+    
+    <string name="hidden_songs_title">隐藏歌曲</string>
+    <string name="no_hidden_songs">没有隐藏的歌曲</string>
+    <string name="restore_button">恢复</string>
+    <string name="menu_hide_song">隐藏歌曲</string>
+    
+    <string name="permission_denied">权限被拒绝</string>
+</resources>

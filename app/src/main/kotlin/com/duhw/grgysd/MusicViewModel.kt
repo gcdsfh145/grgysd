@@ -22,21 +22,39 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+enum class AppLanguage(val tag: String, val label: String) {
+    SYSTEM("", "Default"),
+    EN("en", "English"),
+    ZH("zh", "中文")
+}
 
 data class MusicSource(val name: String, val url: String)
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
-    private val player: ExoPlayer = ExoPlayer.Builder(application).build()
+    private val prefs = application.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+    
     private val client = OkHttpClient.Builder()
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .header("Referer", "http://www.kuwo.cn/")
                 .build()
             chain.proceed(request)
         }
         .build()
+
+    private val player: ExoPlayer = ExoPlayer.Builder(application)
+        .setMediaSourceFactory(
+            androidx.media3.exoplayer.source.DefaultMediaSourceFactory(application)
+                .setDataSourceFactory(OkHttpDataSource.Factory(client))
+        )
+        .build()
+
     private var searchJob: Job? = null
     
     val availableSources = mutableStateListOf(
@@ -46,8 +64,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         MusicSource("XHILY", "https://wyy.xhily.com"),
         MusicSource("Focalors", "https://music-api.focalors.ltd")
     )
-    var selectedSource by mutableStateOf(availableSources[0])
     
+    var selectedSource by mutableStateOf(availableSources[0])
     var allSongs by mutableStateOf<List<Song>>(emptyList())
     var onlineSongs by mutableStateOf<List<Song>>(emptyList())
     var userPlaylists by mutableStateOf<List<Playlist>>(listOf(Playlist("fav", "Favorites")))
@@ -62,6 +80,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     var useDynamicColor by mutableStateOf(true)
     var accentColor by mutableStateOf(Color(0xFF3F51B5))
+    var currentLanguage by mutableStateOf(AppLanguage.SYSTEM)
     var isOnlineEnabled by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
 
@@ -71,7 +90,57 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             (searchQuery.isBlank() || it.title.contains(searchQuery, ignoreCase = true) || it.artist.contains(searchQuery, ignoreCase = true))
         }
 
+    fun updateThemeMode(mode: ThemeMode) {
+        themeMode = mode
+        prefs.edit().putString("theme_mode", mode.name).apply()
+    }
+
+    fun updateDynamicColor(enabled: Boolean) {
+        useDynamicColor = enabled
+        prefs.edit().putBoolean("dynamic_color", enabled).apply()
+    }
+
+    fun setLanguage(language: AppLanguage) {
+        currentLanguage = language
+        prefs.edit().putString("app_lang", language.name).apply()
+        val appLocale: LocaleListCompat = if (language == AppLanguage.SYSTEM) {
+            LocaleListCompat.getEmptyLocaleList()
+        } else {
+            LocaleListCompat.forLanguageTags(language.tag)
+        }
+        AppCompatDelegate.setApplicationLocales(appLocale)
+    }
+
+    fun updateOnlineEnabled(enabled: Boolean) {
+        isOnlineEnabled = enabled
+        prefs.edit().putBoolean("online_enabled", enabled).apply()
+    }
+
+    fun updateSelectedSource(source: MusicSource) {
+        selectedSource = source
+        prefs.edit().putString("selected_source_name", source.name).apply()
+    }
+
     init {
+        // 加载持久化设置
+        themeMode = ThemeMode.valueOf(prefs.getString("theme_mode", ThemeMode.SYSTEM.name)!!)
+        useDynamicColor = prefs.getBoolean("dynamic_color", true)
+        isOnlineEnabled = prefs.getBoolean("online_enabled", false)
+        
+        val savedLang = prefs.getString("app_lang", AppLanguage.SYSTEM.name)
+        val initialLang = AppLanguage.valueOf(savedLang ?: AppLanguage.SYSTEM.name)
+        currentLanguage = initialLang
+        // 初始应用保存的语言
+        if (initialLang != AppLanguage.SYSTEM) {
+            setLanguage(initialLang)
+        }
+        
+        val sourceName = prefs.getString("selected_source_name", "默认 (Qijieya)")
+        availableSources.find { it.name == sourceName }?.let { selectedSource = it }
+
+        val hiddenIds = prefs.getStringSet("hidden_songs", emptySet()) ?: emptySet()
+        hiddenSongIds.addAll(hiddenIds.mapNotNull { it.toLongOrNull() })
+
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -143,7 +212,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     title = item.getString("SONGNAME"),
                     artist = item.getString("ARTIST"),
                     durationMs = 0,
-                    uri = android.net.Uri.parse("https://player.kuwo.cn/api/aplayer/music?mid=$rid"), // 另一种酷我播放链接格式
+                    // antiserver 接口会自动重定向到真实的 .mp3 链接，配合 OkHttpDataSource 可以完美播放
+                    uri = android.net.Uri.parse("https://antiserver.kuwo.cn/anti.s?format=mp3&rid=MUSIC_$rid&type=convert_url&response=res&cp=0"),
                     coverColor = Color(0xFF2196F3)
                 ))
             }
@@ -336,11 +406,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun hideSong(songId: Long) {
         hiddenSongIds.add(songId)
+        prefs.edit().putStringSet("hidden_songs", hiddenSongIds.map { it.toString() }.toSet()).apply()
         syncPlayerQueue()
     }
 
     fun unhideSong(songId: Long) {
         hiddenSongIds.remove(songId)
+        prefs.edit().putStringSet("hidden_songs", hiddenSongIds.map { it.toString() }.toSet()).apply()
         syncPlayerQueue()
     }
 
